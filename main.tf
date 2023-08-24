@@ -10,14 +10,15 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-west-2"
+  region = "us-east-1"
 }
 
-resource "aws_instance" "app_server" {
-  ami           = "ami-830c94e3"
+resource "aws_instance" "factorio" {
+  ami           = "ami-07df5833f04703a2a"
   instance_type = "t2.micro"
+  key_name      = "mmazzanti"
 
   tags = {
-    Name = "ExampleAppServerInstance"
+    Name = "factorio"
   }
 }
