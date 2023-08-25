@@ -4,6 +4,11 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 4.16"
     }
+
+    tailscale = {
+      source = "tailscale/tailscale"
+      version = "~> 0.13"
+    }
   }
 
   required_version = ">= 1.2.0"
@@ -13,13 +18,24 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_secretsmanager_secret" "test_secret" {
-  name = "test_secret"
+provider "tailscale" {
+  tailnet = "matthew.mazzanti@gmail.com"
+}
+
+resource "tailscale_tailnet_key" "factorio_key" {
+  reusable      = false
+  ephemeral     = false
+  preauthorized = true
+  expiry        = 3600
+}
+
+resource "aws_secretsmanager_secret" "factorio_secret" {
+  name = "factorio_secret"
 }
 
 resource "aws_secretsmanager_secret_version" "example" {
-  secret_id     = aws_secretsmanager_secret.test_secret.id
-  secret_string = "Hello world!"
+  secret_id     = aws_secretsmanager_secret.factorio_secret.id
+  secret_string = tailscale_tailnet_key.factorio_key.key
 }
 
 resource "aws_iam_policy" "factorio_policy" {
@@ -32,7 +48,7 @@ resource "aws_iam_policy" "factorio_policy" {
       {
         "Effect" : "Allow",
         "Action" : ["secretsmanager:GetSecretValue"],
-        "Resource" : [aws_secretsmanager_secret.test_secret.id]
+        "Resource" : [aws_secretsmanager_secret.factorio_secret.id]
       }
     ]
   })
