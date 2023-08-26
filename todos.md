@@ -1,0 +1,5 @@
+- Build minimal Nixos AMI
+- Disallow root login
+- Figure out something with the passwords
+- Use flakes instead of channels
+- Improve AMI boot time

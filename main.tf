@@ -31,6 +31,7 @@ resource "tailscale_tailnet_key" "factorio_key" {
 
 resource "aws_secretsmanager_secret" "factorio_secret" {
   name = "factorio_secret"
+  recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "example" {
@@ -96,4 +97,8 @@ resource "aws_instance" "factorio" {
   tags = {
     Name = "factorio"
   }
+}
+
+output "factorio_ip_addr" {
+  value = aws_instance.factorio.public_ip
 }
