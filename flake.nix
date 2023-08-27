@@ -13,6 +13,7 @@
           awscli2
           terraform
           tailscale
+          infracost
         ];
       };
   });
