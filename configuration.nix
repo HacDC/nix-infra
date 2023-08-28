@@ -45,7 +45,7 @@
       set -e
 
       hostname="factorio"
-      secret="factorio_secret"
+      secret="/factorio/tailscale/key"
       role="factorio_role"
 
       # Wait for tailscaled to settle
@@ -64,9 +64,9 @@
       export AWS_ACCESS_KEY_ID="$(echo "$creds" | jq -r .AccessKeyId)"
       export AWS_SECRET_ACCESS_KEY="$(echo "$creds" | jq -r .SecretAccessKey)"
       export AWS_SESSION_TOKEN="$(echo "$creds" | jq -r .Token)"
-      auth_key="$(aws secretsmanager get-secret-value --secret-id="$secret" --region="us-east-1" | jq -r .SecretString)"
+      auth_key="$(aws ssm get-parameter --name="$secret" --with-decryption --output json --region us-east-1 | jq -r .Parameter.Value)"
 
-      tailscale up --hostname="$hostname" --authkey="$auth_key"
+      tailscale up --hostname="$hostname" --ssh --authkey="$auth_key"
     '';
   };
 }

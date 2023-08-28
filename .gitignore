@@ -2,3 +2,6 @@
 *.tfstate*
 .direnv/
 .env
+
+# Infracost (ignore for now, maybe it will be necessary to commit later)
+.infracost/
