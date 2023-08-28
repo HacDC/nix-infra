@@ -4,4 +4,3 @@
 - Use flakes instead of channels
 - Improve AMI boot time
 - Impermanence (Erase Your Darlings/TmpFS as root with state explicitly held on a separate EBS volume)
-- Security group settings to only allow ssh inbound

@@ -1,3 +1,33 @@
+data "aws_vpc" "default" {
+  default = true
+}
+
+resource "aws_security_group" "factorio" {
+  name        = "factorio-sg"
+  description = "Firewall config for Factorio server"
+  vpc_id      = data.aws_vpc.default.id
+}
+
+resource "aws_security_group_rule" "factorio_allow_ssh_ingress" {
+  type              = "ingress"
+  description       = "allow ssh"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.factorio.id
+}
+
+resource "aws_security_group_rule" "factorio_allow_all_egress" {
+  type              = "egress"
+  description       = "allow all"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.factorio.id
+}
+
 resource "tailscale_tailnet_key" "factorio" {
   reusable      = false
   ephemeral     = false
@@ -72,9 +102,7 @@ resource "aws_instance" "factorio" {
   user_data            = file("${path.module}/configuration.nix")
   iam_instance_profile = aws_iam_instance_profile.factorio.name
 
-  tags = {
-    Name = "factorio"
-  }
+  vpc_security_group_ids = [aws_security_group.factorio.id]
 
   # Do not create until the ssm parameter has been created
   depends_on = [aws_ssm_parameter.factorio_tailnet_key]
