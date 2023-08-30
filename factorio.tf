@@ -96,16 +96,25 @@ resource "aws_iam_instance_profile" "factorio" {
 
 resource "aws_instance" "factorio" {
   ami           = "ami-07df5833f04703a2a"
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
   key_name      = aws_key_pair.mmazzanti.key_name
-
+  availability_zone = local.aws_az
   user_data            = file("${path.module}/configuration.nix")
   iam_instance_profile = aws_iam_instance_profile.factorio.name
-
   vpc_security_group_ids = [aws_security_group.factorio.id]
-
   # Do not create until the ssm parameter has been created
   depends_on = [aws_ssm_parameter.factorio_tailnet_key]
+}
+
+resource "aws_ebs_volume" "factorio" {
+  availability_zone = local.aws_az
+  size              = 2
+}
+
+resource "aws_volume_attachment" "factorio" {
+  device_name = "/dev/sdf"
+  volume_id   = aws_ebs_volume.factorio.id
+  instance_id = aws_instance.factorio.id
 }
 
 output "factorio_ip_addr" {

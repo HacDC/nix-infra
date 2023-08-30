@@ -1,6 +1,8 @@
 { pkgs, modulesPath, ... }: {
   imports = [ "${modulesPath}/virtualisation/amazon-image.nix" ];
 
+  system.stateVersion = "23.05";
+
   environment.systemPackages = with pkgs; [
     neovim
     tailscale
@@ -22,6 +24,11 @@
 
   systemd.services.amazon-init.enable = false;
 
+  fileSystems."/var/lib/tailscale" = {
+    autoFormat = true;
+    device = "/dev/nvme1n1";
+    fsType = "ext4";
+  };
   services.tailscale.enable = true;
   systemd.services.tailscale-autoconnect = {
     description = "Automatic connection to Tailscale";
