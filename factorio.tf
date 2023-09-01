@@ -48,40 +48,39 @@ resource "aws_ssm_parameter" "factorio_tailnet_key" {
   value       = tailscale_tailnet_key.factorio.key
 }
 
+data "aws_iam_policy_document" "factorio_policy" {
+  statement {
+    actions = [
+      "ssm:GetParameter",
+      "ssm:DescribeParameters",
+      "ssm:GetParametersByPath"
+    ]
+    resources = [
+      "arn:aws:ssm:${local.aws_region}:${local.aws_account_id}:parameter/${local.factorio_ssm_prefix}*"
+    ]
+  }
+}
+
 resource "aws_iam_policy" "factorio" {
   name        = "factorio_policy"
   path        = "/"
   description = "Allow factorio server to read SSM secrets"
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "ssm:GetParameter",
-          "ssm:DescribeParameters",
-          "ssm:GetParametersByPath"
-        ],
-        "Resource" : "arn:aws:ssm:${local.aws_region}:${local.aws_account_id}:parameter/${local.factorio_ssm_prefix}*"
-      },
-    ]
-  })
+  policy = aws_iam_policy_document.factorio_policy.json
+}
+
+data "aws_iam_policy_document" "factorio_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
 }
 
 resource "aws_iam_role" "factorio" {
   name = "factorio_role"
-  assume_role_policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Principal" : {
-          "Service" : "ec2.amazonaws.com"
-        },
-        "Action" : "sts:AssumeRole"
-      }
-    ]
-  })
+  assume_role_policy = aws_iam_policy_document.factorio_role.json
 }
 
 resource "aws_iam_role_policy_attachment" "factorio" {
