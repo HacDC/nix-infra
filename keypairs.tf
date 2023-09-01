@@ -1,11 +1,21 @@
-# TODO: remove in favor of Tailscale SSH
-
-resource "aws_key_pair" "mmazzanti" {
-  key_name   = "mmazzanti"
-  public_key = file("${path.module}/keys/mmazzanti.pub")
+# Generate an SSH key pair as strings stored in Terraform state
+resource "tls_private_key" "deploy-key" {
+  algorithm = "ED25519"
 }
 
-resource "aws_key_pair" "nikitawootten" {
-  key_name   = "nikitawootten"
-  public_key = file("${path.module}/keys/nikitawootten.pub")
+# Synchronize the SSH private key to a local file that the "nixos" module can use
+resource "local_sensitive_file" "ssh_private_key" {
+  filename = "${path.module}/id_ed25519"
+  content  = tls_private_key.deploy-key.private_key_openssh
+}
+
+resource "local_file" "ssh_public_key" {
+  filename = "${path.module}/id_ed25519.pub"
+  content  = tls_private_key.deploy-key.public_key_openssh
+}
+
+# Mirror the SSH public key to EC2 so that we can later install the public key
+# as an authorized key for our server
+resource "aws_key_pair" "deploy-key" {
+  public_key = tls_private_key.deploy-key.public_key_openssh
 }

@@ -1,6 +1,4 @@
-- Build minimal Nixos AMI
 - Disallow root login
-- Figure out something with the passwords
-- Use flakes instead of channels
+- Figure out something with the passwords & ssh keys
 - Improve AMI boot time
-- Impermanence (Erase Your Darlings/TmpFS as root with state explicitly held on a separate EBS volume)
+- Modularize the repository, making the deployment reusable and making room for non-factorio experiments

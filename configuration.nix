@@ -1,11 +1,11 @@
-{ pkgs, modulesPath, ... }:
-let
-  impermanence = builtins.fetchTarball "https://github.com/nix-community/impermanence/archive/master.tar.gz";
-in {
+{ pkgs, modulesPath, impermanence, ... }:
+{
   imports = [
     "${modulesPath}/virtualisation/amazon-image.nix"
-    "${impermanence}/nixos.nix"
+    impermanence.nixosModule
   ];
+
+  networking.hostName = "factorio";
 
   system.stateVersion = "23.05";
 
@@ -28,16 +28,18 @@ in {
     amazon-ec2-utils
   ];
 
+  # passwordless sudo required to deploy via deploy-rs
+  security.sudo.wheelNeedsPassword = false;
+
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = false;
     settings.KbdInteractiveAuthentication = false;
   };
 
-  users.users.mmazzanti = {
+  users.users.hacdc = {
     isNormalUser  = true;
     extraGroups  = [ "wheel" ];
-    openssh.authorizedKeys.keys  = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDAXPC+JicLK6gxDVtvQaLN5CEPSXyFIrPe8OlcEm3Zz mmazzanti@beta.local" ];
   };
 
   systemd.services.amazon-init.enable = false;

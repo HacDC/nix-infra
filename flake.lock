@@ -1,5 +1,45 @@
 {
   "nodes": {
+    "deploy-rs": {
+      "inputs": {
+        "flake-compat": "flake-compat",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "utils": [
+          "flake-utils"
+        ]
+      },
+      "locked": {
+        "lastModified": 1686747123,
+        "narHash": "sha256-XUQK9kwHpTeilHoad7L4LjMCCyY13Oq383CoFADecRE=",
+        "owner": "serokell",
+        "repo": "deploy-rs",
+        "rev": "724463b5a94daa810abfc64a4f87faef4e00f984",
+        "type": "github"
+      },
+      "original": {
+        "owner": "serokell",
+        "repo": "deploy-rs",
+        "type": "github"
+      }
+    },
+    "flake-compat": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1668681692,
+        "narHash": "sha256-Ht91NGdewz8IQLtWZ9LCeNXMSXHUss+9COoqu6JLmXU=",
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "rev": "009399224d5e398d03b22badca40a37ac85412a1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -15,6 +55,21 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "impermanence": {
+      "locked": {
+        "lastModified": 1690797372,
+        "narHash": "sha256-GImz19e33SeVcIvBB7NnhbJSbTpFFmNtWLh7Z85Y188=",
+        "owner": "nix-community",
+        "repo": "impermanence",
+        "rev": "e3a7acd113903269a1b5c8b527e84ce7ee859851",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "impermanence",
         "type": "github"
       }
     },
@@ -36,7 +91,9 @@
     },
     "root": {
       "inputs": {
+        "deploy-rs": "deploy-rs",
         "flake-utils": "flake-utils",
+        "impermanence": "impermanence",
         "nixpkgs": "nixpkgs"
       }
     },
