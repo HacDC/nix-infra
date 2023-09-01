@@ -1,11 +1,31 @@
-{ pkgs, modulesPath, ... }: {
-  imports = [ "${modulesPath}/virtualisation/amazon-image.nix" ];
+{ pkgs, modulesPath, ... }:
+let
+  impermanence = builtins.fetchTarball "https://github.com/nix-community/impermanence/archive/master.tar.gz";
+in {
+  imports = [
+    "${modulesPath}/virtualisation/amazon-image.nix"
+    "${impermanence}/nixos.nix"
+  ];
+
+  system.stateVersion = "23.05";
+
+  swapDevices = [{
+    device = "/swapfile";
+    size = 1*1024; # 1G
+  }];
+
+  fileSystems."/state" = {
+    neededForBoot = true;
+    device = "/dev/disk/by-label/state";
+    fsType = "ext4";
+  };
 
   environment.systemPackages = with pkgs; [
-    neovim
+    neovim-unwrapped
     tailscale
     awscli2
     jq
+    amazon-ec2-utils
   ];
 
   services.openssh = {
@@ -22,6 +42,10 @@
 
   systemd.services.amazon-init.enable = false;
 
+  # Tailscale configuration
+  environment.persistence."/state".directories = [
+    "/var/lib/tailscale"
+  ];
   services.tailscale.enable = true;
   systemd.services.tailscale-autoconnect = {
     description = "Automatic connection to Tailscale";

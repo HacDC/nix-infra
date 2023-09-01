@@ -28,4 +28,6 @@ data "aws_region" "current" {}
 locals {
   aws_account_id = data.aws_caller_identity.current.account_id
   aws_region     = data.aws_region.current.name
+  # TODO: hack
+  aws_az = "${data.aws_region.current.name}b"
 }

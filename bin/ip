@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+cat "$ROOT/terraform.tfstate" | jq -r .outputs.factorio_ip_addr.value
