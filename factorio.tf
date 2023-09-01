@@ -95,15 +95,44 @@ resource "aws_iam_instance_profile" "factorio" {
 }
 
 resource "aws_instance" "factorio" {
-  ami           = "ami-07df5833f04703a2a"
-  instance_type = "t3.micro"
-  key_name      = aws_key_pair.mmazzanti.key_name
-  availability_zone = local.aws_az
-  user_data            = file("${path.module}/configuration.nix")
-  iam_instance_profile = aws_iam_instance_profile.factorio.name
+  ami                    = "ami-07df5833f04703a2a"
+  instance_type          = "t3.micro"
+  key_name               = aws_key_pair.mmazzanti.key_name
+  availability_zone      = local.aws_az
+  iam_instance_profile   = aws_iam_instance_profile.factorio.name
   vpc_security_group_ids = [aws_security_group.factorio.id]
   # Do not create until the ssm parameter has been created
   depends_on = [aws_ssm_parameter.factorio_tailnet_key]
+  root_block_device {
+    volume_size = 8
+  }
+
+  user_data = <<EOT
+#!/usr/bin/env bash
+
+drive="/dev/sdf"
+nix-shell -p bash util-linux e2fsprogs --run bash <<EOF
+  set -e
+
+  fallocate -l 1G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+
+  if [ "ext4" != "$(blkid -o value -s TYPE "$drive")" ]; then
+    mkfs -t ext4 -L state "$drive"
+  fi
+  mkdir /state
+  mount /dev/disk/by-label/state /state
+EOF
+
+cat <<'EOF' >/etc/nixos/configuration.nix
+${file("${path.module}/configuration.nix")}
+EOF
+
+nixos-rebuild switch
+nix-collect-garbage -d
+EOT
 }
 
 resource "aws_ebs_volume" "factorio" {
