@@ -109,21 +109,33 @@ resource "aws_instance" "factorio" {
 
   user_data = <<EOT
 #!/usr/bin/env bash
-
-drive="/dev/sdf"
-nix-shell -p bash util-linux e2fsprogs --run bash <<EOF
+nix-shell -p bash util-linux e2fsprogs --run bash <<'EOF'
   set -e
+
+  function wait_for() {
+    drive="$1"
+    until [ -e "$drive" ]; do
+      echo "Waiting for $drive to be ready..."
+      sleep 1
+    done
+    echo "Device $drive ready"
+  }
 
   fallocate -l 1G /swapfile
   chmod 600 /swapfile
   mkswap /swapfile
   swapon /swapfile
 
+  drive="/dev/sdf"
+  wait_for "$drive"
   if [ "ext4" != "$(blkid -o value -s TYPE "$drive")" ]; then
     mkfs -t ext4 -L state "$drive"
   fi
+
+  drive="/dev/disk/by-label/state"
+  wait_for "$drive"
   mkdir /state
-  mount /dev/disk/by-label/state /state
+  mount "$drive" /state
 EOF
 EOT
 }
