@@ -1,3 +1,4 @@
+- Build minimal Nixos AMI
 - Disallow root login
 - Figure out something with the passwords & ssh keys
 - Improve AMI boot time
