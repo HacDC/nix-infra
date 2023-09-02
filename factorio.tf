@@ -35,53 +35,46 @@ resource "tailscale_tailnet_key" "factorio" {
   expiry        = 3600
 }
 
-locals {
-  factorio_ssm_prefix           = "factorio"
-  factorio_tailnet_ssm_prefix   = "${local.factorio_ssm_prefix}/tailscale"
-  factorio_tailnet_key_ssm_path = "${local.factorio_tailnet_ssm_prefix}/key"
-}
-
 resource "aws_ssm_parameter" "factorio_tailnet_key" {
-  name        = "/${local.factorio_tailnet_key_ssm_path}"
+  name        = "/factorio/tailscale/key"
   description = "AuthKey used to connect to the tailnet"
   type        = "SecureString"
   value       = tailscale_tailnet_key.factorio.key
+}
+
+data "aws_iam_policy_document" "factorio_policy" {
+  statement {
+    actions = [
+      "ssm:GetParameter",
+      "ssm:DescribeParameters",
+      "ssm:GetParametersByPath"
+    ]
+    resources = [
+      aws_ssm_parameter.factorio_tailnet_key.arn
+    ]
+  }
 }
 
 resource "aws_iam_policy" "factorio" {
   name        = "factorio_policy"
   path        = "/"
   description = "Allow factorio server to read SSM secrets"
-  policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "ssm:GetParameter",
-          "ssm:DescribeParameters",
-          "ssm:GetParametersByPath"
-        ],
-        "Resource" : "arn:aws:ssm:${local.aws_region}:${local.aws_account_id}:parameter/${local.factorio_ssm_prefix}*"
-      },
-    ]
-  })
+  policy = data.aws_iam_policy_document.factorio_policy.json
+}
+
+data "aws_iam_policy_document" "factorio_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
 }
 
 resource "aws_iam_role" "factorio" {
   name = "factorio_role"
-  assume_role_policy = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Principal" : {
-          "Service" : "ec2.amazonaws.com"
-        },
-        "Action" : "sts:AssumeRole"
-      }
-    ]
-  })
+  assume_role_policy = data.aws_iam_policy_document.factorio_role.json
 }
 
 resource "aws_iam_role_policy_attachment" "factorio" {
