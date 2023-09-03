@@ -37,17 +37,16 @@
     };
 
     deploy.nodes.factorio = {
-      # By default, connect to host factorio with ssh user hacdc and sudo as root
-      # Note that for terraform deployments the sshUser and hostname are overridden.
+      # By default, connect to host factorio with ssh user hacdc and sudo as
+      # root Note that for terraform deployments the sshUser and hostname are
+      # overridden.
       hostname = "factorio";
       sshUser = "hacdc";
       user = "root";
-      # Build on the remote host (increase compatibility with non-x86-linux clients)
-      remoteBuild = true;
 
       profiles.system.path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.factorio;
     };
 
-    # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+    checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
   };
 }
