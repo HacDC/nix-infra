@@ -18,7 +18,7 @@ locals {
   # use the generated keys and trust the new host
   ssh-opts = "-o StrictHostKeyChecking=accept-new -i ${local_sensitive_file.ssh_private_key.filename}"
   # override ssh-user and hostname for the bootstrap deployment
-  deploy-args = "--skip-checks --ssh-user=root --ssh-opts=\"${local.ssh-opts}\" --hostname=${aws_instance.factorio.public_dns}"
+  deploy-args = "--ssh-user=root --ssh-opts=\"${local.ssh-opts}\" --hostname=${aws_instance.factorio.public_dns}"
 }
 
 resource "null_resource" "deploy" {
