@@ -53,8 +53,16 @@
     description = "Automatic connection to Tailscale";
 
     # Make sure tailscale is running before trying to connect to tailscale
-    after = [ "network-pre.target" "tailscale.service" ];
-    wants = [ "network-pre.target" "tailscale.service" ];
+    after = [
+      "network-pre.target"
+      "tailscaled.service"
+      "apply-ec2-data.service"
+    ];
+    wants = [
+      "network-pre.target"
+      "tailscaled.service"
+      "apply-ec2-data.service"
+    ];
     wantedBy = [ "multi-user.target" ];
 
     # Set this service as a oneshot job
@@ -74,11 +82,11 @@
       secret="/factorio/tailscale/key"
       role="factorio_role"
 
-      # Wait for tailscaled to settle
-      sleep 2
-
       # Check if we are already authenticated to tailscale. If so do nothing
-      status="$(tailscale status --json | jq -r .BackendState)"
+      until status="$(tailscale status --json)"; do
+        sleep 1
+      done
+      status="$(echo "$status" | jq -r .BackendState)"
       if [ "$status" = "Running" ]; then
         exit 0
       fi

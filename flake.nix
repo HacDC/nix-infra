@@ -23,6 +23,7 @@
           nixos-rebuild
           awscli2
           terraform
+          packer
           tailscale
           infracost
           deploy-rs.packages.${system}.default
@@ -47,6 +48,22 @@
       profiles.system.path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.factorio;
     };
 
-    checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+    nixosConfigurations.tailscale = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [ ./configuration.nix ];
+      specialArgs = { inherit impermanence; };
+    };
+
+    deploy.nodes.tailscale = {
+      hostname = "packer";
+      sshUser = "root";
+      user = "root";
+
+      profiles.system.path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.tailscale;
+    };
+
+    checks = builtins.mapAttrs (system: deployLib:
+      deployLib.deployChecks self.deploy
+    ) deploy-rs.lib;
   };
 }
