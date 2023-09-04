@@ -1,5 +1,4 @@
-{ pkgs, modulesPath, impermanence, ... }:
-{
+{ pkgs, modulesPath, impermanence, ... }: {
   imports = [
     "${modulesPath}/virtualisation/amazon-image.nix"
     impermanence.nixosModule

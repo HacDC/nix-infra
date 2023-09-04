@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -e
+name="$1"
+
+image="$(
+    aws ec2 describe-images \
+        --owners self \
+        --filters "Name=name,Values=$name" \
+        | jq -r '.Images[0]'
+)"
+if [ "$image" = "null" ]; then
+    echo "Could not find image \"$name\""
+    exit 0
+fi
+
+ami="$(jq -r '.ImageId' <<< "$image")"
+
+filter='.BlockDeviceMappings[].Ebs.SnapshotId | select(. != null)'
+snapshots="$(jq -r "$filter" <<< "$image")"
+
+echo "AMI to deregister: $ami"
+echo "Snapshots to delete:\n$snapshots"
+
+aws ec2 deregister-image --image-id "$ami"
+while read snapshot; do
+    aws ec2 delete-snapshot --snapshot-id "$snapshot"
+done <<< "$snapshots"

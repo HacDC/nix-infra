@@ -27,13 +27,15 @@
           tailscale
           infracost
           deploy-rs.packages.${system}.default
+          jq
+          curl
         ];
       };
     });
 
     nixosConfigurations.factorio = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      modules = [ ./configuration.nix ];
+      modules = [ ./configuration.nix ./factorio.nix ];
       specialArgs = { inherit impermanence; };
     };
 
@@ -42,7 +44,7 @@
       # root Note that for terraform deployments the sshUser and hostname are
       # overridden.
       hostname = "factorio";
-      sshUser = "hacdc";
+      sshUser = "root";
       user = "root";
 
       profiles.system.path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.factorio;
