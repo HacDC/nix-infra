@@ -40,10 +40,8 @@
     };
 
     deploy.nodes.factorio = {
-      # By default, connect to host factorio with ssh user hacdc and sudo as
-      # root Note that for terraform deployments the sshUser and hostname are
-      # overridden.
       hostname = "factorio";
+      # Getting a "signing key" error with hacdc user
       sshUser = "root";
       user = "root";
 
@@ -57,6 +55,7 @@
     };
 
     deploy.nodes.tailscale = {
+      # Hostname not used, overriden by CLI setting.
       hostname = "packer";
       sshUser = "root";
       user = "root";
@@ -64,6 +63,7 @@
       profiles.system.path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.tailscale;
     };
 
+    # Requires an x86_64-linux builder to be available
     checks = builtins.mapAttrs (system: deployLib:
       deployLib.deployChecks self.deploy
     ) deploy-rs.lib;

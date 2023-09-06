@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
+# Deregister an AMI, and cleanup all associated snapshots.
+# Usage:
+#   `aws-delete-ami nix-tailscale`
 set -e
+
 name="$1"
 
+# Find the AMI description
 image="$(
     aws ec2 describe-images \
         --owners self \
@@ -13,8 +18,10 @@ if [ "$image" = "null" ]; then
     exit 0
 fi
 
+# Pull out AMI ID
 ami="$(jq -r '.ImageId' <<< "$image")"
 
+# Pull out all snapshot IDs, newline separated
 filter='.BlockDeviceMappings[].Ebs.SnapshotId | select(. != null)'
 snapshots="$(jq -r "$filter" <<< "$image")"
 

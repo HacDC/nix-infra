@@ -1,3 +1,5 @@
+# TODO: Modularization
+
 data "aws_vpc" "default" {
   default = true
 }
@@ -56,6 +58,7 @@ resource "aws_iam_role_policy_attachment" "factorio" {
   policy_arn = aws_iam_policy.factorio.arn
 }
 
+# Allow instance to access some limited AWS resouces
 resource "aws_iam_instance_profile" "factorio" {
   name = "factorio_profile"
   role = aws_iam_role.factorio.name
@@ -76,7 +79,7 @@ locals {
 }
 
 resource "aws_instance" "factorio" {
-  ami                         = data.aws_ami.nix_tailscale.id # "ami-07df5833f04703a2a"
+  ami                         = data.aws_ami.nix_tailscale.id
   instance_type               = "t3.micro"
   key_name                    = aws_key_pair.deploy_key.key_name
   associate_public_ip_address = false
@@ -91,6 +94,10 @@ resource "aws_instance" "factorio" {
   }
 }
 
+# Manage the state device separately from the instance AMI to avoid
+# recreation if the instance is recreated.
+# TODO: Test this better
+# TODO: Importing an existing disk
 resource "aws_ebs_volume" "factorio" {
   availability_zone = local.aws_az
   snapshot_id       = local.ami_device.ebs.snapshot_id
