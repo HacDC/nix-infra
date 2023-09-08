@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Delete a tailscale device by host name
 # Usage:
-#   `tailscale-delete-dev factorio`
+#   `tailscale-device-delete factorio`
 set -e
 
 hostname="$1"

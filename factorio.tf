@@ -88,6 +88,10 @@ resource "aws_instance" "factorio" {
   # Do not create until the ssm parameter has been created
   depends_on = [aws_ssm_parameter.factorio_tailnet_key]
 
+  root_block_device {
+    type = "gp3"
+  }
+
   ephemeral_block_device {
     device_name = local.state_device_name
     no_device   = true

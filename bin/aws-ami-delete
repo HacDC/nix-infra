@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Deregister an AMI, and cleanup all associated snapshots.
 # Usage:
-#   `aws-delete-ami nix-tailscale`
-set -e
+#   `aws-ami-delete nix-tailscale`
+set -eo pipefail
 
 name="$1"
 
@@ -26,7 +26,8 @@ filter='.BlockDeviceMappings[].Ebs.SnapshotId | select(. != null)'
 snapshots="$(jq -r "$filter" <<< "$image")"
 
 echo "AMI to deregister: $ami"
-echo "Snapshots to delete:\n$snapshots"
+echo "Snapshots to delete:
+echo "$snapshots"
 
 aws ec2 deregister-image --image-id "$ami"
 while read snapshot; do

@@ -1,2 +1,0 @@
-#!/usr/bin/env bash
-terraform output -raw factorio_ip_addr

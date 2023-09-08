@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -e
+cd "$ROOT/packer"
+
+if ! aws sts get-caller-identity --profile legacy; then
+    aws sso login --profile legacy
+fi
+
+aws-ami-delete nix-tailscale
+packer build tailscale.pkr.hcl
