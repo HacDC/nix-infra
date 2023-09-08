@@ -2,7 +2,7 @@
 set -e
 cd "$ROOT/packer"
 
-if ! aws sts get-caller-identity --profile legacy; then
+if ! aws sts get-caller-identity --profile legacy >/dev/null; then
     aws sso login --profile legacy
 fi
 

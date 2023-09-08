@@ -89,7 +89,7 @@ resource "aws_instance" "factorio" {
   depends_on = [aws_ssm_parameter.factorio_tailnet_key]
 
   root_block_device {
-    type = "gp3"
+    volume_type = "gp3"
   }
 
   ephemeral_block_device {
@@ -126,10 +126,14 @@ resource "null_resource" "wait" {
   }
 }
 
+local {
+  ssh_opts = "-o StrictHostKeyChecking=accept-new"
+}
+
 resource "null_resource" "deploy" {
   provisioner "local-exec" {
     # interpreter = "nix develop ${path.module}# --command bash"
-    command = "deploy ${path.module}#factorio"
+    command = "deploy --ssh-opts=\"${ssh_opts}\" ${path.module}#factorio"
   }
 
   depends_on = [null_resource.wait]

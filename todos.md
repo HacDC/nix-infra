@@ -4,3 +4,4 @@
   non-factorio experiments
 - Setup Terraform state management
 - Configure Terraform and Packer in nix
+- S3 backups of saves
