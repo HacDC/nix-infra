@@ -57,9 +57,9 @@ in
       script = ''
         set -euo pipefail
 
-        hostname="${cfg.device-name}"
-        secret="${cfg.ssm-param}"
-        role="${cfg.aws-role}"
+        hostname=${lib.strings.escapeShellArg cfg.device-name}
+        secret=${lib.strings.escapeShellArg cfg.ssm-param}
+        role=${lib.strings.escapeShellArg cfg.aws-role}
 
         # Check if we are already authenticated to tailscale. If so do nothing
         until status="$(tailscale status --json)"; do
