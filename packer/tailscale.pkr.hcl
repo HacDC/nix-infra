@@ -78,7 +78,7 @@ build {
       "KEY" = build.SSHPrivateKey
     }
     # Default shell is sh, set to bash for $() expansion
-    inline_shebang = "/usr/bin/env bash -e"
+    inline_shebang = "/usr/bin/env bash"
     inline = [ <<-EOT
       set -euo pipefail
       # Create temp file for key, remove on script exit

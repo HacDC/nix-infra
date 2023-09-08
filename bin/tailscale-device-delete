@@ -11,8 +11,7 @@ api="https://api.tailscale.com/api/v2"
 # Using "simple" curl auth, so append a colon
 auth="$TAILSCALE_API_KEY:"
 
-# For users, tailnet ID is their email.
-url="$api/tailnet/$TAILSCALE_EMAIL/devices"
+url="$api/tailnet/$TAILSCALE_ORG/devices"
 jq_select=".devices[] | select(.name == \"$hostname.$TAILSCALE_NET\") | .id"
 device_id="$(curl -s -u "$auth" "$url" | jq -r "$jq_select")"
 if [ -z "$device_id" ]; then

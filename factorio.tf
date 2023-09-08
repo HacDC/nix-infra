@@ -126,14 +126,14 @@ resource "null_resource" "wait" {
   }
 }
 
-local {
+locals {
   ssh_opts = "-o StrictHostKeyChecking=accept-new"
 }
 
 resource "null_resource" "deploy" {
   provisioner "local-exec" {
     # interpreter = "nix develop ${path.module}# --command bash"
-    command = "deploy --ssh-opts=\"${ssh_opts}\" ${path.module}#factorio"
+    command = "deploy --ssh-opts=\"${local.ssh_opts}\" ${path.module}#factorio"
   }
 
   depends_on = [null_resource.wait]
