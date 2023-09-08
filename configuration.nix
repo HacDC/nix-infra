@@ -1,31 +1,38 @@
-{ pkgs, modulesPath, impermanence, ... }:
-{
+{ pkgs, modulesPath, impermanence, ... }: {
   imports = [
     "${modulesPath}/virtualisation/amazon-image.nix"
     impermanence.nixosModule
   ];
 
+  # TODO: Required? Will be configured by ec2-medata service, if set. Would make
+  # image more flexible
   networking.hostName = "factorio";
 
   system.stateVersion = "23.05";
 
+  # Setup some swap space to help low-power systems with medium-size builds
   swapDevices = [{
     device = "/swapfile";
     size = 1*1024; # 1G
   }];
 
   fileSystems."/state" = {
+    # TODO: Had some conflicts with autoResize and neededForBoot (maybe, may
+    # have been a different issue) Figure out if autoResize is required for AWS
+    # disk sizing
+    # autoResize = true;
     neededForBoot = true;
+    # Use labeled disk for consistency
     device = "/dev/disk/by-label/state";
     fsType = "ext4";
   };
 
   environment.systemPackages = with pkgs; [
-    neovim-unwrapped
-    tailscale
     awscli2
-    jq
     amazon-ec2-utils
+    tailscale
+    neovim-unwrapped # Unwrapped, to avoid pulling in ruby/python dependencies
+    jq
   ];
 
   # passwordless sudo required to deploy via deploy-rs
@@ -53,14 +60,20 @@
     description = "Automatic connection to Tailscale";
 
     # Make sure tailscale is running before trying to connect to tailscale
-    after = [ "network-pre.target" "tailscale.service" ];
-    wants = [ "network-pre.target" "tailscale.service" ];
+    after = [
+      "network-pre.target"
+      "tailscaled.service"
+      "apply-ec2-data.service"
+    ];
+    wants = [
+      "network-pre.target"
+      "tailscaled.service"
+      "apply-ec2-data.service"
+    ];
     wantedBy = [ "multi-user.target" ];
 
-    # Set this service as a oneshot job
     serviceConfig.Type = "oneshot";
 
-    # Have the job run this shell script
     path = with pkgs; [
       tailscale
       awscli
@@ -68,17 +81,19 @@
       curl
     ];
     script = ''
-      set -e
+      set -euo pipefail
 
+      # TODO: Find this from a hostname set in Terraform or Nix. Terraform path
+      # requires ec2 metadata service to have run
       hostname="factorio"
       secret="/factorio/tailscale/key"
       role="factorio_role"
 
-      # Wait for tailscaled to settle
-      sleep 2
-
       # Check if we are already authenticated to tailscale. If so do nothing
-      status="$(tailscale status --json | jq -r .BackendState)"
+      until status="$(tailscale status --json)"; do
+        sleep 1
+      done
+      status="$(echo "$status" | jq -r .BackendState)"
       if [ "$status" = "Running" ]; then
         exit 0
       fi

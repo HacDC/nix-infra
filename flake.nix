@@ -23,31 +23,49 @@
           nixos-rebuild
           awscli2
           terraform
+          packer
           tailscale
           infracost
           deploy-rs.packages.${system}.default
+          jq
+          curl
         ];
       };
     });
 
     nixosConfigurations.factorio = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      modules = [ ./configuration.nix ];
+      modules = [ ./configuration.nix ./factorio.nix ];
       specialArgs = { inherit impermanence; };
     };
 
     deploy.nodes.factorio = {
-      # By default, connect to host factorio with ssh user hacdc and sudo as root
-      # Note that for terraform deployments the sshUser and hostname are overridden.
       hostname = "factorio";
-      sshUser = "hacdc";
+      # Getting a "signing key" error with hacdc user
+      sshUser = "root";
       user = "root";
-      # Build on the remote host (increase compatibility with non-x86-linux clients)
-      remoteBuild = true;
 
       profiles.system.path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.factorio;
     };
 
-    # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+    nixosConfigurations.tailscale = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [ ./configuration.nix ];
+      specialArgs = { inherit impermanence; };
+    };
+
+    deploy.nodes.tailscale = {
+      # Hostname not used, overriden by CLI setting.
+      hostname = "packer";
+      sshUser = "root";
+      user = "root";
+
+      profiles.system.path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.tailscale;
+    };
+
+    # Requires an x86_64-linux builder to be available
+    checks = builtins.mapAttrs (system: deployLib:
+      deployLib.deployChecks self.deploy
+    ) deploy-rs.lib;
   };
 }

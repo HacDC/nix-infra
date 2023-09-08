@@ -7,3 +7,5 @@ id_*
 
 # Infracost (ignore for now, maybe it will be necessary to commit later)
 .infracost/
+
+**/result

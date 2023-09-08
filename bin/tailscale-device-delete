@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Delete a tailscale device by host name
+# Usage:
+#   `tailscale-device-delete factorio`
+set -euo pipefail
+
+hostname="$1"
+
+# Docs: https://github.com/tailscale/tailscale/blob/main/api.md
+api="https://api.tailscale.com/api/v2"
+# Using "simple" curl auth, so append a colon
+auth="$TAILSCALE_API_KEY:"
+
+url="$api/tailnet/$TAILSCALE_ORG/devices"
+jq_select=".devices[] | select(.name == \"$hostname.$TAILSCALE_NET\") | .id"
+device_id="$(curl -s -u "$auth" "$url" | jq -r "$jq_select")"
+if [ -z "$device_id" ]; then
+    echo "device did not exist"
+    exit 0
+fi
+
+curl -s -u "$auth" -X DELETE "$api/device/$device_id" 
