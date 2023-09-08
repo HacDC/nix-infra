@@ -81,7 +81,7 @@
       curl
     ];
     script = ''
-      set -e
+      set -euo pipefail
 
       # TODO: Find this from a hostname set in Terraform or Nix. Terraform path
       # requires ec2 metadata service to have run

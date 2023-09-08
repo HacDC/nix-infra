@@ -2,7 +2,7 @@
 # Delete a tailscale device by host name
 # Usage:
 #   `tailscale-device-delete factorio`
-set -e
+set -euo pipefail
 
 hostname="$1"
 

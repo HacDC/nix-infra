@@ -78,9 +78,9 @@ build {
       "KEY" = build.SSHPrivateKey
     }
     # Default shell is sh, set to bash for $() expansion
-    inline_shebang = "/usr/bin/env bash"
+    inline_shebang = "/usr/bin/env bash -e"
     inline = [ <<-EOT
-      set -e
+      set -euo pipefail
       # Create temp file for key, remove on script exit
       keyfile="$(mktemp)"
       trap 'rm -rf -- "$keyfile"' EXIT

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 cd "$ROOT/packer"
 
 if ! aws sts get-caller-identity --profile legacy >/dev/null; then
