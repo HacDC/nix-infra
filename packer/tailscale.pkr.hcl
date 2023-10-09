@@ -27,13 +27,6 @@ source "amazon-ebs" "nix-tailscale" {
     volume_size = 8
     delete_on_termination = true
   }
-
-  launch_block_device_mappings {
-    device_name = "/dev/sdf"
-    volume_type = "gp3"
-    volume_size = 8
-    delete_on_termination = true
-  }
 }
 
 build {
@@ -44,29 +37,11 @@ build {
 
   provisioner "shell" {
     inline = [ <<-EOT
-      function wait_for() {
-        drive="$1"
-        until [ -e "$drive" ]; do
-          echo "Waiting for $drive to be ready..."
-          sleep 1
-        done
-        echo "Device $drive ready"
-      }
-
       # Setup temp swap file to help building & stability
       fallocate -l 1G /swapfile
       chmod 600 /swapfile
       mkswap /swapfile
       swapon /swapfile
-
-      drive="/dev/sdf"
-      wait_for "$drive"
-      mkfs -t ext4 -L state "$drive"
-
-      drive="/dev/disk/by-label/state"
-      wait_for "$drive"
-      mkdir /state
-      mount "$drive" /state
     EOT
     ]
   }
@@ -97,6 +72,7 @@ build {
       # services don't hang due to invalid environment
       deploy \
         --boot \
+        --skip-checks \
         --ssh-opts="$ssh_opts" \
         --ssh-user="$USER" \
         --hostname="$HOST" \

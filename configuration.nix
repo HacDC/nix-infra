@@ -16,17 +16,6 @@
     size = 1*1024; # 1G
   }];
 
-  fileSystems."/state" = {
-    # TODO: Had some conflicts with autoResize and neededForBoot (maybe, may
-    # have been a different issue) Figure out if autoResize is required for AWS
-    # disk sizing
-    # autoResize = true;
-    neededForBoot = true;
-    # Use labeled disk for consistency
-    device = "/dev/disk/by-label/state";
-    fsType = "ext4";
-  };
-
   environment.systemPackages = with pkgs; [
     awscli2
     amazon-ec2-utils
@@ -47,15 +36,88 @@
   users.users.hacdc = {
     isNormalUser  = true;
     extraGroups  = [ "wheel" ];
+    hashedPassword = "$y$j9T$zhD4ntsrvOGlpgDcatdun.$26c1CAonxC.3serEg/GE/2oHdFO9ahXsaYVSEupHOR/";
   };
 
   systemd.services.amazon-init.enable = false;
 
-  # Tailscale configuration
-  environment.persistence."/state".directories = [
-    "/var/lib/tailscale"
+  # fileSystems."/state" = {
+  #   # TODO: Had some conflicts with autoResize and neededForBoot (maybe, may
+  #   # have been a different issue) Figure out if autoResize is required for AWS
+  #   # disk sizing
+  #   # autoResize = true;
+  #   # neededForBoot = true;
+  #   # Use labeled disk for consistency
+  #   device = "/dev/nvme1n1";
+  #   fsType = "ext4";
+  #   autoFormat = true;
+  #   autoResize = true;
+  #   neededForBoot = true; # Not needed for our usecase, but needed for impermanence
+  #   options = ["x-systemd.device-timeout=10min"];
+  # };
+  systemd.services.format-nvme = {
+    description = "Format /dev/sdf";
+
+    wantedBy = [ "multi-user.target" ];
+
+    serviceConfig.Type = "oneshot";
+
+    path = with pkgs; [
+      util-linux
+      e2fsprogs
+      amazon-ec2-utils
+    ];
+    script = ''
+      set -euo pipefail
+
+      function find_drive() {
+        while IFS= read -r -d ''' dev; do
+          if [[ "$(ebsnvme-id --block-dev "$dev")" == "/dev/sdf" ]]; then
+            echo "$dev"
+            return 0
+          fi
+          echo "after return"
+        done < <(find /dev -regex '^/dev/nvme[0-9]+n1$' -print0)
+
+        echo "Error: Device not found"
+        return 1
+      }
+
+      drive="$(find_drive)"
+      mkfs -t ext4 -L state "$drive"
+
+      drive="/dev/disk/by-label/state"
+      until [[ -e "$drive" ]]; do
+        echo "Waiting for $drive to be ready..."
+        sleep 1
+      done
+      echo "Device $drive ready"
+    '';
+  };
+
+  systemd.mounts = [
+    {
+      what = "/dev/disk/by-label/state";
+      where = "/state";
+      type = "ext4";
+      wantedBy = ["multi-user.target"];
+      wants = ["format-nvme.service"];
+      after = ["format-nvme.service"];
+    }
+    {
+      what = "/state/var/lib/tailscale";
+      where = "/var/lib/tailscale";
+      wantedBy = ["multi-user.target"];
+    }
   ];
+
+  # Tailscale configuration
   services.tailscale.enable = true;
+  systemd.services.tailscaled = {
+    after = [ "var-lib-tailscale.mount" ];
+    wants = [ "var-lib-tailscale.mount" ];
+  };
+
   systemd.services.tailscale-autoconnect = {
     description = "Automatic connection to Tailscale";
 
@@ -86,8 +148,8 @@
       # TODO: Find this from a hostname set in Terraform or Nix. Terraform path
       # requires ec2 metadata service to have run
       hostname="factorio"
-      secret="/factorio/tailscale/key"
-      role="factorio_role"
+      secret="/$hostname/tailscale/key"
+      role="$hostname"_role
 
       # Check if we are already authenticated to tailscale. If so do nothing
       until status="$(tailscale status --json)"; do
@@ -100,12 +162,32 @@
 
       # Fetch the auth key from aws metadata
       imds="http://169.254.169.254/latest"
-      token="$(curl -s -X PUT -H "X-aws-ec2-metadata-token-ttl-seconds: 30" "$imds/api/token")"
-      creds="$(curl -s -H "X-aws-ec2-metadata-token: $token" "$imds/meta-data/iam/security-credentials/$role")"
+      token="$(
+        curl \
+          --silent \
+          --request PUT \
+          --header "X-aws-ec2-metadata-token-ttl-seconds: 30" \
+          "$imds/api/token"
+      )"
+
+      creds="$(
+        curl \
+          --silent \
+          --header "X-aws-ec2-metadata-token: $token" \
+          "$imds/meta-data/iam/security-credentials/$role"
+      )"
+
       export AWS_ACCESS_KEY_ID="$(echo "$creds" | jq -r .AccessKeyId)"
       export AWS_SECRET_ACCESS_KEY="$(echo "$creds" | jq -r .SecretAccessKey)"
       export AWS_SESSION_TOKEN="$(echo "$creds" | jq -r .Token)"
-      auth_key="$(aws ssm get-parameter --name="$secret" --with-decryption --output json --region us-east-1 | jq -r .Parameter.Value)"
+      auth_key="$(
+        aws ssm get-parameter \
+          --name="$secret" \
+          --with-decryption \
+          --output json \
+          --region us-east-1 \
+        | jq -r .Parameter.Value
+      )"
 
       tailscale up --hostname="$hostname" --ssh --authkey="$auth_key"
     '';

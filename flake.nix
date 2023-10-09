@@ -35,7 +35,7 @@
 
     nixosConfigurations.factorio = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      modules = [ ./configuration.nix ./factorio.nix ];
+      modules = [ ./configuration.nix ];
       specialArgs = { inherit impermanence; };
     };
 
@@ -49,7 +49,7 @@
     };
 
     nixosConfigurations.tailscale = nixpkgs.lib.nixosSystem {
-      system = "aarch64-linux";
+      system = "x86_64-linux";
       modules = [ ./configuration.nix ];
       specialArgs = { inherit impermanence; };
     };
