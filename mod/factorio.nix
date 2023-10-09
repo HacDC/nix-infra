@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, jq, ... }:
 
 with lib;
 
@@ -37,7 +37,8 @@ let
     autosave_only_on_server = true;
     non_blocking_saving = cfg.nonBlockingSaving;
   } // cfg.extraSettings;
-  serverSettingsFile = pkgs.writeText "server-settings.json" (builtins.toJSON (filterAttrsRecursive (n: v: v != null) serverSettings));
+  serverSettingsDefault = pkgs.writeText "server-settings.json" (builtins.toJSON (filterAttrsRecursive (n: v: v != null) serverSettings));
+  serverSettingsRuntime = "${stateDir}/server-settings.json";
   serverAdminsFile = pkgs.writeText "server-adminlist.json" (builtins.toJSON cfg.admins);
   modDir = pkgs.factorio-utils.mkModDirDrv cfg.mods cfg.mods-dat;
 in
@@ -218,6 +219,13 @@ in
           Game password.
         '';
       };
+      gamePasswordFile = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        description = lib.mdDoc ''
+          Game password file.
+        '';
+      };
       requireUserVerification = mkOption {
         type = types.bool;
         default = true;
@@ -250,18 +258,23 @@ in
       description   = "Factorio headless server";
       wantedBy      = [ "multi-user.target" ];
       after         = [ "network.target" ];
-
-      preStart = let
-        makeCfg = toString [
+      preStart = concatStringsSep "\n" [
+        (optionalString (passwordFile != null) ''
+         ${jq}/bin/jq \
+            --arg game_password "$(cat ${escapeShellArg cfg.gamePasswordFile})" \
+            '.game_password = $game_password)"' \
+            < ${serverSettingsDefault} \
+            > ${serverSettingsRuntime}
+        '')
+        (toString [
           "test -e ${stateDir}/saves/${cfg.saveName}.zip"
           "||"
           "${cfg.package}/bin/factorio"
             "--config=${cfg.configFile}"
             "--create=${mkSavePath cfg.saveName}"
             (optionalString (cfg.mods != []) "--mod-directory=${modDir}")
-        ];
-      in ''
-      '';
+        ])
+      ];
 
       serviceConfig = {
         Restart = "always";
@@ -275,7 +288,7 @@ in
           "--port=${toString cfg.port}"
           "--bind=${cfg.bind}"
           (optionalString (!cfg.loadLatestSave) "--start-server=${mkSavePath cfg.saveName}")
-          "--server-settings=${serverSettingsFile}"
+          "--server-settings=${serverSettingsRuntime}"
           (optionalString cfg.loadLatestSave "--start-server-load-latest")
           (optionalString (cfg.mods != []) "--mod-directory=${modDir}")
           (optionalString (cfg.admins != []) "--server-adminlist=${serverAdminsFile}")

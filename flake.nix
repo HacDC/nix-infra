@@ -20,13 +20,13 @@
         buildInputs = with pkgs; [
           nixos-rebuild
           awscli2
-          terraform
-          packer
+          opentofu
           tailscale
           infracost
           deploy-rs.packages.${system}.default
           jq
           curl
+          nix-tree
         ];
       };
     });
@@ -34,6 +34,7 @@
     nixosConfigurations.factorio = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
+        ./mod/factorio.nix
         ./cfg/configuration.nix
       ];
     };
