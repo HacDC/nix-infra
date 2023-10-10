@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$ROOT"
+nix build --no-link .#deploy.nodes.factorio.profiles.system.path
+nix build --no-link .#deploy.nodes.terraria.profiles.system.path
+tofu apply
+deploy --skip-checks --hostname="$(tofu output --raw factorio_ip)" .#factorio
+deploy --skip-checks --hostname="$(tofu output --raw terraria_ip)" .#terraria

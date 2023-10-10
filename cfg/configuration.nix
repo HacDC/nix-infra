@@ -3,10 +3,6 @@
     "${modulesPath}/virtualisation/amazon-image.nix"
   ];
 
-  # TODO: Required? Will be configured by ec2-medata service, if set. Would make
-  # image more flexible
-  networking.hostName = "factorio";
-
   system.stateVersion = "23.05";
 
   # Setup some swap space to help low-power systems with medium-size builds

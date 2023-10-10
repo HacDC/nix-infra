@@ -34,18 +34,33 @@
     nixosConfigurations.factorio = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        ./mod/factorio.nix
         ./cfg/configuration.nix
+        ./cfg/factorio.nix
       ];
     };
 
     deploy.nodes.factorio = {
       hostname = "factorio";
-      # Getting a "signing key" error with hacdc user
       sshUser = "root";
       user = "root";
 
       profiles.system.path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.factorio;
+    };
+
+    nixosConfigurations.terraria = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ./cfg/configuration.nix
+        ./cfg/terraria.nix
+      ];
+    };
+
+    deploy.nodes.terraria = {
+      hostname = "terraria";
+      sshUser = "root";
+      user = "root";
+
+      profiles.system.path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.terraria;
     };
   };
 }

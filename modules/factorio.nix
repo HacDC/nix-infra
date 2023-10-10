@@ -1,4 +1,4 @@
-{ config, lib, pkgs, jq, ... }:
+{ config, lib, pkgs, ... }:
 
 with lib;
 
@@ -259,10 +259,10 @@ in
       wantedBy      = [ "multi-user.target" ];
       after         = [ "network.target" ];
       preStart = concatStringsSep "\n" [
-        (optionalString (passwordFile != null) ''
-         ${jq}/bin/jq \
+        (optionalString (cfg.gamePasswordFile != null) ''
+         ${pkgs.jq}/bin/jq \
             --arg game_password "$(cat ${escapeShellArg cfg.gamePasswordFile})" \
-            '.game_password = $game_password)"' \
+            '.game_password = $game_password' \
             < ${serverSettingsDefault} \
             > ${serverSettingsRuntime}
         '')
