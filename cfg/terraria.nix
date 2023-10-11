@@ -1,5 +1,14 @@
-{ pkgs, ... }: {
-  disabledModules = [ "services/games/terraria.nix" ];
+{ pkgs, ... }: let
+  terraria-admin = pkgs.writeShellScriptBin "terraria-admin" ''
+    #!${pkgs.runtimeShell}
+    set -euo pipefail
+    set -m
+
+    trap 'kill "$(jobs -p)"' SIGINT SIGTERM EXIT
+    journalctl --follow --unit terraria.service --output cat &
+    cat > /run/terraria.stdin
+  '';
+in {
   imports = [
     ../modules/terraria.nix
     ../modules/load-ssm.nix
@@ -8,14 +17,16 @@
     nixpkgs.config.allowUnfree = true;
 
     networking.hostName = "terraria";
-
-    environment.systemPackages = [ pkgs.tmux ];
+    environment.systemPackages = [ terraria-admin ];
+    users.users.mmazzanti.extraGroups  = [ "terraria" ];
 
     services.terraria = {
       enable = true;
-      passwordFile = "/secrets/terraria/password";
-      worldPath = "/var/lib/terraria/.local/share/Terraria/Worlds/World.wld";
+      passwordPath = "/secrets/terraria/password";
+      worldName = "test2";
       openFirewall = true;
+      noUPnP = true;
+      secure = true;
     };
 
     services.load-ssm = {

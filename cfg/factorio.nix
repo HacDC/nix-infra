@@ -1,4 +1,4 @@
-{ ... }: {
+{ pkgs, ... }: {
   disabledModules = [ "services/games/factorio.nix" ];
   imports = [
     ../modules/factorio.nix
@@ -9,10 +9,14 @@
 
     networking.hostName = "factorio";
 
+    environment.systemPackages = [pkgs.inotify-tools];
+
     services.factorio = {
       enable = true;
-      gamePasswordFile = "/secrets/factorio/password";
+      gamePasswordPath = "/secrets/factorio/password";
       openFirewall = true;
+      admins = ["mmazzanti"];
+      autosave-interval = 10;
     };
 
     services.load-ssm = {

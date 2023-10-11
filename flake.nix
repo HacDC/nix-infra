@@ -34,14 +34,14 @@
     nixosConfigurations.factorio = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        ./cfg/configuration.nix
+        ./cfg/base.nix
         ./cfg/factorio.nix
       ];
     };
 
     deploy.nodes.factorio = {
       hostname = "factorio.mmazzanti.com";
-      sshUser = "root";
+      sshUser = "mmazzanti";
       user = "root";
 
       profiles.system.path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.factorio;
@@ -50,14 +50,14 @@
     nixosConfigurations.terraria = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        ./cfg/configuration.nix
+        ./cfg/base.nix
         ./cfg/terraria.nix
       ];
     };
 
     deploy.nodes.terraria = {
       hostname = "terraria.mmazzanti.com";
-      sshUser = "root";
+      sshUser = "mmazzanti";
       user = "root";
 
       profiles.system.path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.terraria;

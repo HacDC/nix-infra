@@ -219,7 +219,7 @@ in
           Game password.
         '';
       };
-      gamePasswordFile = mkOption {
+      gamePasswordPath = mkOption {
         type = types.nullOr types.path;
         default = null;
         description = lib.mdDoc ''
@@ -259,9 +259,9 @@ in
       wantedBy      = [ "multi-user.target" ];
       after         = [ "network.target" ];
       preStart = concatStringsSep "\n" [
-        (optionalString (cfg.gamePasswordFile != null) ''
+        (optionalString (cfg.gamePasswordPath != null) ''
          ${pkgs.jq}/bin/jq \
-            --arg game_password "$(cat ${escapeShellArg cfg.gamePasswordFile})" \
+            --arg game_password "$(cat ${escapeShellArg cfg.gamePasswordPath})" \
             '.game_password = $game_password' \
             < ${serverSettingsDefault} \
             > ${serverSettingsRuntime}

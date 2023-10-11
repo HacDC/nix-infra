@@ -29,6 +29,10 @@ variable "password" {
   sensitive   = true
 }
 
+variable "user_data" {
+  type = string
+}
+
 resource "aws_ssm_parameter" "password" {
   name        = "/terraria/password"
   description = "In game password for terraria"
@@ -93,6 +97,25 @@ resource "aws_security_group" "instance" {
     cidr_blocks = ["${var.deployer_ip}/32"]
   }
 
+  ingress {
+    description = "ICMP From Deployer"
+    from_port = 8
+    to_port = 0
+    protocol = "icmp"
+    cidr_blocks = ["${var.deployer_ip}/32"]
+  }
+
+  dynamic "ingress" {
+    for_each = var.player_ips
+    content {
+      description = ingress.key
+      from_port   = 7777
+      to_port     = 7777
+      protocol    = "tcp"
+      cidr_blocks = ["${ingress.value}/32"]
+    }
+  }
+
   dynamic "ingress" {
     for_each = var.player_ips
     content {
@@ -120,10 +143,11 @@ resource "aws_instance" "instance" {
   availability_zone      = var.aws_az
   iam_instance_profile   = aws_iam_instance_profile.instance.name
   vpc_security_group_ids = [aws_security_group.instance.id]
+  user_data              = var.user_data
 
   root_block_device {
     volume_type = "gp3"
-    volume_size = 8
+    volume_size = 12
   }
 
   tags = {

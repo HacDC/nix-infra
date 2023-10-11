@@ -49,6 +49,9 @@ resource "aws_key_pair" "deploy_key" {
   public_key = var.ssh_public_key
 }
 
+locals {
+  user_data = file("${path.module}/cfg/base.nix")
+}
 
 # ===== Factorio =====
 variable "factorio_password" {
@@ -69,6 +72,7 @@ module "factorio" {
   deployer_ip = var.deployer_ip
   password    = var.factorio_password
   player_ips  = var.factorio_player_ips
+  user_data   = local.user_data
 }
 
 output "factorio_ip" {
@@ -95,6 +99,7 @@ module "terraria" {
   deployer_ip = var.deployer_ip
   password    = var.terraria_password
   player_ips  = var.terraria_player_ips
+  user_data   = local.user_data
 }
 
 output "terraria_ip" {

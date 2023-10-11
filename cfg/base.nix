@@ -14,15 +14,11 @@
   environment.systemPackages = with pkgs; [
     awscli2
     amazon-ec2-utils
-    tailscale
     neovim-unwrapped # Unwrapped, to avoid pulling in ruby/python dependencies
     jq
   ];
 
   boot.loader.grub.device = lib.mkForce "/dev/nvme0n1";
-
-  # passwordless sudo required to deploy via deploy-rs
-  security.sudo.wheelNeedsPassword = false;
 
   services.openssh = {
     enable = true;
@@ -30,11 +26,19 @@
     settings.KbdInteractiveAuthentication = false;
   };
 
-  users.users.hacdc = {
+  users.users.mmazzanti = {
     isNormalUser  = true;
     extraGroups  = [ "wheel" ];
-    hashedPassword = "$y$j9T$zhD4ntsrvOGlpgDcatdun.$26c1CAonxC.3serEg/GE/2oHdFO9ahXsaYVSEupHOR/";
+    openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4h5HZCnD2uFkpb8Z/pPQKXrtdV5YU3DG1w+9rOyddy mmazzanti@beta.xi" ];
   };
+
+  # passwordless sudo required to deploy via deploy-rs
+  security.sudo.wheelNeedsPassword = false;
+
+  nix.settings.trusted-users = [ "root" "@wheel" ];
+  nix.extraOptions = ''
+    experimental-features = nix-command flakes
+  '';
 
   systemd.services.amazon-init.enable = false;
 }
