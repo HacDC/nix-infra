@@ -40,7 +40,7 @@
     };
 
     deploy.nodes.factorio = {
-      hostname = "factorio";
+      hostname = "factorio.mmazzanti.com";
       sshUser = "root";
       user = "root";
 
@@ -56,7 +56,7 @@
     };
 
     deploy.nodes.terraria = {
-      hostname = "terraria";
+      hostname = "terraria.mmazzanti.com";
       sshUser = "root";
       user = "root";
 
